@@ -1,8 +1,10 @@
-# cprintf
+# CPRINTF Library
 
 `cprintf` is a header-only C library that adds ANSI colours and attributes to `printf` without having to write the full code out. This makes it easy to add coloured and styled text to your terminal output.
 
-## Features
+---
+
+## FEATURES
 
 - Header-only library
 - Supports ANSI colours for foreground and background
