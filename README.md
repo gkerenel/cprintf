@@ -48,7 +48,6 @@ int main(int argc, char * argv[]) {
 
 ## FORMATING OPTIONS
 
-
 ### FOREGROUND COLOURS
 
 - **%Fk**: Black
