@@ -24,8 +24,6 @@
 #define CPRINTF_HIDDEN                              8
 #define CPRINTF_STRIKETHOUGH                        9
 
-#define CPRINTF_BUFFER_SIZE                         2048
-
 static const char * CPRINTF_FG_COLOURS[] = {
   "\033[30m",
   "\033[31m",
@@ -62,6 +60,7 @@ static const char * CPRINTF_ATTRIBUTES[] = {
 };
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -86,12 +85,15 @@ int cprintf_get_status(void) {
   return cprintf_enable_flag;
 }
 
-int cvfprintf(FILE *stream, const char * restrict format, va_list args) {
-  char buffer[CPRINTF_BUFFER_SIZE];
+int cprintf_cfmt_snprintf (char *buf, size_t buf_n, const char * restrict format) {
+  int rc = 0;
   int index = 0;
   const char * pointer = format;
 
-  while (pointer[0]) {
+  char *buf_iter = buf;
+  size_t remaining_n = buf_n;
+
+  while (*pointer != '\0') {
     if (pointer[0] == '%' && (pointer[1] == 'F' || pointer[1] == 'B' || pointer[1] == 'A')) {
       pointer++;
 
@@ -101,57 +103,141 @@ int cvfprintf(FILE *stream, const char * restrict format, va_list args) {
           pointer++;
 
           switch (pointer[0]) {
-            case 'k': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_BLACK]   : CPRINTF_BG_COLOURS[CPRINTF_BLACK]);    break;
-            case 'r': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_RED]     : CPRINTF_BG_COLOURS[CPRINTF_RED]);      break;
-            case 'g': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_GREEN]   : CPRINTF_BG_COLOURS[CPRINTF_GREEN]);    break;
-            case 'y': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_YELLOW]  : CPRINTF_BG_COLOURS[CPRINTF_YELLOW]);   break;
-            case 'b': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_BLUE]    : CPRINTF_BG_COLOURS[CPRINTF_BLUE]);     break;
-            case 'm': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_MAGENTA] : CPRINTF_BG_COLOURS[CPRINTF_MAGENTA]);  break;
-            case 'c': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_CYAN]    : CPRINTF_BG_COLOURS[CPRINTF_CYAN]);     break;
-            case 'w': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_WHITE]   : CPRINTF_BG_COLOURS[CPRINTF_WHITE]);    break;
+            case 'k': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_BLACK]   : CPRINTF_BG_COLOURS[CPRINTF_BLACK]);    break;
+            case 'r': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_RED]     : CPRINTF_BG_COLOURS[CPRINTF_RED]);      break;
+            case 'g': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_GREEN]   : CPRINTF_BG_COLOURS[CPRINTF_GREEN]);    break;
+            case 'y': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_YELLOW]  : CPRINTF_BG_COLOURS[CPRINTF_YELLOW]);   break;
+            case 'b': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_BLUE]    : CPRINTF_BG_COLOURS[CPRINTF_BLUE]);     break;
+            case 'm': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_MAGENTA] : CPRINTF_BG_COLOURS[CPRINTF_MAGENTA]);  break;
+            case 'c': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_CYAN]    : CPRINTF_BG_COLOURS[CPRINTF_CYAN]);     break;
+            case 'w': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : (pointer[-1] == 'F') ? CPRINTF_FG_COLOURS[CPRINTF_WHITE]   : CPRINTF_BG_COLOURS[CPRINTF_WHITE]);    break;
           }
-
-          index += strlen(&buffer[index]);
           break;
         case 'A':
             pointer++;
 
             switch (pointer[0]) {
-              case 'r': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_RESET]); break;
-              case 'b': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_BOLD]); break;
-              case 'f': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_DIM]); break;
-              case 'i': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_ITALIC]); break;
-              case 'u': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_UNDERLINE]); break;
-              case 'l': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_BLINK_SLOW]); break;
-              case 'k': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_BLINK_RAPID]); break;
-              case 'v': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_INVERTED]); break;
-              case 'h': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_HIDDEN]); break;
-              case 's': snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_STRIKETHOUGH]); break;
+              case 'r': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_RESET]); break;
+              case 'b': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_BOLD]); break;
+              case 'f': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_DIM]); break;
+              case 'i': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_ITALIC]); break;
+              case 'u': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_UNDERLINE]); break;
+              case 'l': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_BLINK_SLOW]); break;
+              case 'k': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_BLINK_RAPID]); break;
+              case 'v': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_INVERTED]); break;
+              case 'h': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_HIDDEN]); break;
+              case 's': rc = snprintf(buf_iter, remaining_n, "%s", (!cprintf_enable_flag) ? "" : CPRINTF_ATTRIBUTES[CPRINTF_STRIKETHOUGH]); break;
             }
-
-            index += strlen(&buffer[index]);
             break;
         default:
-          snprintf(&buffer[index], CPRINTF_BUFFER_SIZE - index, "%%%c", pointer[0]);
-          index += strlen(&buffer[index]);
+          rc = snprintf(buf_iter, remaining_n, "%%%c", pointer[0]);
           break;
       }
     }
-    
     else {
-      buffer[index++] = pointer[0];
+      if (buf != NULL)
+      {
+        *buf_iter = pointer[0];
+      }
+      rc = 1;
     }
 
-    if (index >= CPRINTF_BUFFER_SIZE) {
-      break;
+    /* handle snprintf failure */
+    if (rc == -1)
+    {
+      return -1;
     }
-      
+
+    /* increment the total bytes written */
+    index += rc;
+
+    /* move along the buffer if in write mode */
+    if (buf_iter != NULL) { 
+      buf_iter    += rc;
+      remaining_n -= rc;
+
+      if (index > buf_n) {
+        break;
+      }
+    }
+
+    /* move the read pointer */ 
     pointer++;
   }
 
-  buffer[index] = '\0';
-  return vfprintf(stream, buffer, args);
+  if (buf_iter != NULL) {
+    *buf_iter = '\0';
+  }
+  return index;
 }
+
+char *cprintf_get_cfmt (const char * restrict format) {
+  int rc = 0;
+  char  *cfmt = NULL;
+  size_t cfmt_size = 0;
+
+  rc = cprintf_cfmt_snprintf (NULL, 0, format);
+  if (rc <= -1) { 
+    return NULL; 
+  }
+  cfmt_size = (size_t)rc;
+  cfmt = malloc (cfmt_size + 1);
+  if (cfmt == NULL) {
+    return NULL;
+  }
+  (void)cprintf_cfmt_snprintf (cfmt, cfmt_size, format);
+  cfmt[cfmt_size] = '\0';
+
+  return cfmt;
+}
+
+int cvsnprintf(char *buf, size_t buf_n, const char * restrict format, va_list args)
+{
+  int rc = 0;
+  char *cfmt = NULL;
+
+  cfmt = cprintf_get_cfmt(format);
+  if (cfmt == NULL) {
+    return -1;
+  }
+
+  rc = vsnprintf(buf, buf_n, cfmt, args);
+
+  free (cfmt);
+  cfmt = NULL;
+  return rc;
+}
+
+
+int csnprintf(char *buf, size_t buf_n, const char * restrict format, ...) {
+  va_list args;
+  int rc = 0;
+
+  va_start(args, format);
+  
+  rc = cvsnprintf(buf, buf_n, format, args);
+
+  va_end(args);
+  return rc;
+}
+
+
+int cvfprintf(FILE *stream, const char * restrict format, va_list args) {
+  int rc = 0;
+  char *cfmt = NULL;
+
+  cfmt = cprintf_get_cfmt(format);
+  if (cfmt == NULL) {
+    return -1;
+  }
+
+  rc = vfprintf(stream, cfmt, args);
+
+  free (cfmt);
+  cfmt = NULL;
+  return rc;
+}
+
 
 
 int cfprintf(FILE *stream, const char * restrict format, ...) {
