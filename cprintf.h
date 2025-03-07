@@ -82,6 +82,10 @@ void cprintf_toggle(void) {
   cprintf_enable_flag ^= 1;
 }
 
+int cprintf_get_status(void) {
+  return cprintf_enable_flag;
+}
+
 int cvfprintf(FILE *stream, const char * restrict format, va_list args) {
   char buffer[CPRINTF_BUFFER_SIZE];
   int index = 0;
