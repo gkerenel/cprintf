@@ -28,7 +28,7 @@ To use `cprintf`, define `CPRINTF_IMPLEMENTATION` before including the header fi
 #include "cprintf.h"
 ```
 
-Then, you can use cprintf in your code just like printf, but with additional formatting options.
+Then, you can use `cprintf`, `cfprintf`, and `cvfprintf` in your code just like printf, but with additional formatting options.
 
 Aditionally, you can enable/disable colored output with: `cprintf_enable`, `cprintf_disable`, and `cprintf_toggle`. The default behavior is enabled, this can be overwritten by defining `CPRINTF_ENABLE_FLAG_DEFAULT` to either `0` (disabled) or `1` (enabled).
 
@@ -53,7 +53,7 @@ int main(int argc, char * argv[]) {
     cprintf("%FbNORMAL TEXT%Ar\n");
 
     cprintf_enable();
-    cprintf("%FbBLUE TEXT%Ar\n");
+    cfprintf(stderr, "%FbBLUE TEXT%Ar\n");
     return 0;
 }
 ```

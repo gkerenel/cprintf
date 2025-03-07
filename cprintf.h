@@ -82,9 +82,7 @@ void cprintf_toggle(void) {
   cprintf_enable_flag ^= 1;
 }
 
-int cprintf(const char * restrict format, ...) {
-  va_list args;
-  va_start(args, format);
+int cvfprintf(FILE *stream, const char * restrict format, va_list args) {
   char buffer[CPRINTF_BUFFER_SIZE];
   int index = 0;
   const char * pointer = format;
@@ -148,8 +146,30 @@ int cprintf(const char * restrict format, ...) {
   }
 
   buffer[index] = '\0';
-  vprintf(buffer, args);
+  return vfprintf(stream, buffer, args);
+}
+
+
+int cfprintf(FILE *stream, const char * restrict format, ...) {
+  int rc;
+  va_list args;
+  va_start(args, format);
+
+  rc = cvfprintf(stream, format, args);
+
   va_end(args);
+  return rc;
+}
+
+int cprintf(const char * restrict format, ...) {
+  int rc;
+  va_list args;
+  va_start(args, format);
+
+  rc = cvfprintf(stdout, format, args);
+
+  va_end(args);
+  return rc;
 }
 
 #endif // CPRINTF_IMPLEMENTATION
