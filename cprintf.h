@@ -165,8 +165,11 @@ int cprintf_cfmt_snprintf (char *buf, size_t buf_n, const char * restrict format
     pointer++;
   }
 
+  index++;
   if (buf_iter != NULL) {
     *buf_iter = '\0';
+    buf_iter++;
+    remaining_n--;
   }
   return index;
 }
